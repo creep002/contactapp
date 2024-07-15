@@ -144,10 +144,10 @@ fun ContactListScreen(viewModel: ContactViewModel, navController: NavController)
                 navigationIcon = {
                     IconButton(onClick = {Toast.makeText(context, "Contacts", Toast.LENGTH_SHORT).show()
                     }) {
-                        Icon(painter = painterResource(id = R.drawable.contacticon), contentDescription = null)
+                        Icon(painter = painterResource(id = R.drawable.contactdetails), contentDescription = null)
                     }
                 }, colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = GreenJC,
+                    containerColor = Companion.Red,
                     titleContentColor = Companion.White,
                     navigationIconContentColor = Companion.White
                 ))
