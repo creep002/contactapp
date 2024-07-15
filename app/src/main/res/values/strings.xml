@@ -1,3 +1,7 @@
 <resources>
+<<<<<<< HEAD
     <string name="app_name">Contact App</string>
+=======
+    <string name="app_name">CalendarApp</string>
+>>>>>>> origin/main
 </resources>
