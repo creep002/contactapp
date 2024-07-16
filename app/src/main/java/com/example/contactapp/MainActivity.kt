@@ -38,8 +38,11 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
@@ -50,7 +53,10 @@ import androidx.compose.ui.focus.focusModifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -88,6 +94,7 @@ class MainActivity : ComponentActivity() {
             NavHost(navController = navController, startDestination = "contactList") {
                 composable("contactList") { ContactListScreen(viewModel, navController)}
                 composable("addContact"){ AddContactScreen(viewModel, navController)}
+                composable("searchbar") { SearchBarScreen(viewModel, navController) }
                 composable("contactDetail/{contactId}"){backStackEntry ->
                     val contactId = backStackEntry.arguments?.getString("contactId")?.toInt()
                     val contact = viewModel.allContacts.observeAsState(initial = emptyList()).value.find { it.id == contactId }
@@ -129,6 +136,120 @@ fun ContactItem(contact: Contact, onClick: () -> Unit){
 }
 
 @Composable
+fun SearchBarScreen(viewModel: ContactViewModel, navController: NavController){
+    var searchText by remember { mutableStateOf("") }
+
+    val contacts by viewModel.allContacts.observeAsState(initial = emptyList())
+
+    val filteredContacts = contacts.filter { contact ->
+        contact.name.contains(searchText, ignoreCase = true) || contact.phoneNumber.contains(searchText)
+    }
+
+    Scaffold(
+        topBar = {
+            TopAppBar(modifier = Modifier.height(48.dp),
+                title = {
+                    Box(modifier = Modifier.fillMaxHeight()
+                        .wrapContentHeight(Alignment.CenterVertically)) {
+                        Text("Search Contacts", fontSize = 18.sp)
+                    }
+                },
+                navigationIcon = {
+                    IconButton(onClick = { navController.navigateUp() }) {
+                        Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Companion.White,
+                    titleContentColor = Companion.White,
+                    navigationIconContentColor = Companion.Black
+                ))
+        }
+    ) { paddingValues ->
+        Column(modifier = Modifier
+            .fillMaxSize()
+            .padding(paddingValues)
+            .padding(16.dp)) {
+
+            TextField(
+                value = searchText,
+                onValueChange = { searchText = it },
+                label = { Text("Searching") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp)
+            )
+
+            LazyColumn {
+                items(filteredContacts) { contact ->
+                    SearchContactItem(contact = contact, searchText = searchText) {
+                        navController.navigate("contactDetail/${contact.id}")
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+@Composable
+fun SearchContactItem(contact: Contact, searchText: String, onClick: () -> Unit) {
+    val annotatedString = remember(contact.name, searchText) {
+        buildAnnotatedString {
+            val name = contact.name
+            if (searchText.isEmpty()) {
+                append(name)
+            } else {
+                var lastIndex = 0
+                val regex = Regex("(?i)$searchText")
+                regex.findAll(name).forEach { matchResult ->
+                    val startIndex = matchResult.range.first
+                    append(name.substring(lastIndex, startIndex))
+                    withStyle(style = SpanStyle(color = Companion.Red)) {
+                        append(name.substring(startIndex, startIndex + searchText.length))
+                    }
+                    lastIndex = startIndex + searchText.length
+                }
+                append(name.substring(lastIndex))
+            }
+        }
+    }
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 12.dp, end = 12.dp, top = 8.dp, bottom = 8.dp)
+            .clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(Companion.White),
+        elevation = CardDefaults.cardElevation(4.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onClick)
+                .padding(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Image(
+                painter = rememberAsyncImagePainter(contact.image),
+                contentDescription = contact.name,
+                modifier = Modifier
+                    .size(50.dp)
+                    .clip(CircleShape),
+                contentScale = ContentScale.Crop
+            )
+            Spacer(modifier = Modifier.width(16.dp))
+            Column {
+                Text(text = annotatedString)
+                Text(text = contact.phoneNumber, style = MaterialTheme.typography.bodyMedium)
+            }
+        }
+    }
+}
+
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
 fun ContactListScreen(viewModel: ContactViewModel, navController: NavController){
     val context = LocalContext.current.applicationContext
 
@@ -142,14 +263,36 @@ fun ContactListScreen(viewModel: ContactViewModel, navController: NavController)
                     }
                 },
                 navigationIcon = {
-                    IconButton(onClick = {Toast.makeText(context, "Contacts", Toast.LENGTH_SHORT).show()
+                    IconButton(onClick = {Toast.makeText(context, "Contacts 2", Toast.LENGTH_SHORT).show()
                     }) {
-                        Icon(painter = painterResource(id = R.drawable.contactdetails), contentDescription = null)
+                        Icon(painter = painterResource(id = R.drawable.threedot), contentDescription = null)
                     }
-                }, colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Companion.Red,
-                    titleContentColor = Companion.White,
-                    navigationIconContentColor = Companion.White
+                },
+                actions = {
+                    // Thanh tìm kiếm và Icon search
+                    Box(
+                        modifier = Modifier
+                            .padding(horizontal = 8.dp),
+                        contentAlignment = Alignment.CenterEnd
+                    ) {
+                        IconButton(
+                            onClick = { navController.navigate("searchbar")
+                            },
+                            modifier = Modifier.align(Alignment.CenterEnd)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Search,
+                                contentDescription = "Search",
+                                //tint = Companion.White
+                            )
+                        }
+                    }
+                },
+
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Companion.White,
+                    titleContentColor = Companion.Black,
+                    navigationIconContentColor = Companion.Black
                 ))
         },
         floatingActionButton = {
@@ -157,23 +300,56 @@ fun ContactListScreen(viewModel: ContactViewModel, navController: NavController)
             }) {
                 Icon(imageVector = Icons.Default.Add, contentDescription = "Add Contacts")
             }
-        }
+        },
     ) {paddingValues ->
         val contacts by viewModel.allContacts.observeAsState(initial = emptyList())
-        LazyColumn(modifier = Modifier.padding(paddingValues)
-            .padding(16.dp)
-        ) {
-            items(contacts){ contact ->
-                ContactItem(contact = contact) {
-                    navController.navigate("contactDetail/${contact.id}")
-                }
+        // Sắp xếp danh sách theo tên
+        val sortedContacts = contacts.sortedBy { it.name }
 
+        // Nhóm danh bạ
+        val groupedContacts = sortedContacts.groupBy { contact ->
+            val firstChar = contact.name.firstOrNull()?.lowercaseChar()
+            if (firstChar == null || firstChar.isDigit()) {
+                "#"
+            } else {
+                firstChar.toString()
             }
         }
 
+        // Sắp xếp lại keys để "#" xuất hiện cuối danh sách
+        val sortedKeys = groupedContacts.keys.sortedBy { key ->
+            if (key == "#") {
+                "zzz" // Đặt "#" vào cuối danh sách
+            } else {
+                key
+            }
+        }
+
+        LazyColumn(modifier = Modifier.padding(paddingValues).padding(16.dp)) {
+            sortedKeys.forEach { groupKey ->
+                // Hiển thị phần tử nhóm (chữ cái hoặc "#")
+                item {
+                    Text(
+                        text = groupKey.uppercase(),
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    )
+                }
+
+                // Hiển thị danh sách danh bạ trong nhóm
+                items(groupedContacts[groupKey] ?: emptyList()) { contact ->
+                    ContactItem(contact = contact) {
+                        navController.navigate("contactDetail/${contact.id}")
+                    }
+                }
+            }
+        }
     }
 }
-@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
+
+
+
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter", "DiscouragedApi")
 @Composable
 fun AddContactScreen(viewModel: ContactViewModel, navController: NavController)
 {
@@ -289,13 +465,21 @@ fun AddContactScreen(viewModel: ContactViewModel, navController: NavController)
                     Spacer(modifier = Modifier.height(16.dp))
 
                     Button(onClick = {
-                        imageUri?.let {
-                            val internalPath = copyUriToInternalStorage(context, it, "$name.jpg")
-                            internalPath?.let { path ->
-                                viewModel.addContact(path, name, phonenumber, email)
-                                navController.navigate("contactList"){
-                                    popUpTo(0)
-                                }
+                        val firstChar = name.firstOrNull()?.lowercaseChar()
+                        val defaultImageResId = if (firstChar == null || firstChar.isDigit()) {
+                            context.resources.getIdentifier("human", "drawable", context.packageName)
+                        } else {
+                            context.resources.getIdentifier(firstChar.toString(), "drawable", context.packageName)
+                        }
+
+                        val imagePath = imageUri?.let {
+                            copyUriToInternalStorage(context, it, "$name.jpg")
+                        } ?: "android.resource://${context.packageName}/$defaultImageResId"
+
+                        imagePath?.let { path ->
+                            viewModel.addContact(path, name, phonenumber, email)
+                            navController.navigate("contactList") {
+                                popUpTo(0)
                             }
                         }
                     }, colors = ButtonDefaults.buttonColors(GreenJC)){
@@ -551,7 +735,7 @@ fun EditContactScreen(contact: Contact, viewModel: ContactViewModel, navControll
     }
 }
 
-fun copyUriToInternalStorage(context: Context, uri: Uri, fileName: String): String{
+fun copyUriToInternalStorage(context: Context, uri: Uri, fileName: String): String? {
 
     val file = File(context.filesDir, fileName)
     return try {
@@ -564,5 +748,8 @@ fun copyUriToInternalStorage(context: Context, uri: Uri, fileName: String): Stri
     } catch (e: Exception) {
         e.printStackTrace()
         null
-    }.toString()
+    }
 }
+
+
+
