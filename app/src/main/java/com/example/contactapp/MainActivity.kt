@@ -175,7 +175,8 @@ fun ContactListScreen(viewModel: ContactViewModel, navController: NavController)
 }
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun AddContactScreen(viewModel: ContactViewModel, navController: NavController){
+fun AddContactScreen(viewModel: ContactViewModel, navController: NavController)
+{
     val context = LocalContext.current.applicationContext
 
     var imageUri by remember {
@@ -317,14 +318,15 @@ fun ContactDetailScreen(contact: Contact, viewModel: ContactViewModel, navContro
                             .fillMaxHeight()
                             .wrapContentHeight(Alignment.CenterVertically)
                     ) {
-                        Text(text = "Contact Details", fontSize = 18.sp)
+                        Text(text = "Contact Details1", fontSize = 18.sp)
                     }
                 },
                 navigationIcon = {
                     IconButton(onClick = {Toast.makeText(context, "Contact Details", Toast.LENGTH_SHORT).show() }) {
                         Icon(painter = painterResource(id = R.drawable.contactdetails), contentDescription = null)
                     }
-                }, colors = TopAppBarDefaults.topAppBarColors(
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = GreenJC,
                     titleContentColor = Companion.White,
                     navigationIconContentColor = Companion.White
