@@ -504,7 +504,7 @@ fun AddContactScreen(viewModel: ContactViewModel, navController: NavController)
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            imageUri?.let { uri ->
+            imageUri?.let { uri -> // displays an image with a circular shape and ensures that it is loaded asynchronously and scaled appropriately to fit within the specified size.
                 Image(painter = rememberAsyncImagePainter(uri),
                     contentDescription = null,
                     modifier = Modifier
@@ -575,6 +575,7 @@ fun AddContactScreen(viewModel: ContactViewModel, navController: NavController)
         }
     }
 }
+//Display Contact Detail Screen
 @Composable
 fun ContactDetailScreen(contact: Contact, viewModel: ContactViewModel, navController: NavController) {
     val context = LocalContext.current.applicationContext
@@ -606,8 +607,8 @@ fun ContactDetailScreen(contact: Contact, viewModel: ContactViewModel, navContro
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Blue,
-                    titleContentColor = Companion.White,
+                    containerColor = Blue, //color background
+                    titleContentColor = Companion.White, //color title
                     navigationIconContentColor = Companion.White
                 )
             )
@@ -617,7 +618,7 @@ fun ContactDetailScreen(contact: Contact, viewModel: ContactViewModel, navContro
                 containerColor = GreenJC,
                 onClick = { navController.navigate("editContact/${contact.id}") }
             ) {
-                Icon(imageVector = Icons.Default.Edit, contentDescription = "Edit Contact")
+                Icon(imageVector = Icons.Default.Edit, contentDescription = "Edit Contact")// move to edit contact
             }
         }
     ) { paddingValues ->
@@ -728,14 +729,14 @@ fun ContactDetailScreen(contact: Contact, viewModel: ContactViewModel, navContro
                     }
                 }
             ) {
-                Text("Delete Contact")
+                Text("Delete Contact") //Delete contact
             }
         }
     }
 }
 
 
-
+//Edit Contact Page
 @Composable
 fun EditContactScreen(contact: Contact, viewModel: ContactViewModel, navController: NavController){
     val context = LocalContext.current.applicationContext
